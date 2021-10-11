@@ -8,7 +8,7 @@
 </head>
 
 <body>
-    <textarea id="chat-log" cols="100" rows="20"></textarea><br>
+    <textarea id="chat-log" cols="100" rows="20"></textarea><i id="timestamp"></i>><br>
     <input id="chat-message-input" type="text" size="100"><br>
     <input id="chat-message-submit" type="button" value="Send">
     {{ room_name|json_script:"room-name" }}
@@ -23,9 +23,25 @@
             + '/'
         );
 
+        chatSocket.onopen = function (e) {
+            chatSocket.send(JSON.stringify({
+                'get_all_messages': true
+            }));
+        }
+
         chatSocket.onmessage = function (e) {
             const data = JSON.parse(e.data);
-            document.querySelector('#chat-log').value += (data.message + '\n');
+
+            if (data?.send_all_messages == true) {
+                displayed_messages = "";
+                data.all_messages.forEach((item) => {
+                    // displayed_messages += item.message + '\n' + item.timestamp + '\n';
+                    displayed_messages += item.message + '\n';
+                })
+                document.querySelector('#chat-log').value = displayed_messages;
+            } else {
+                document.querySelector('#chat-log').value += (data.message + '\n');
+            }
         };
 
         chatSocket.onclose = function (e) {
